@@ -40,6 +40,7 @@ class Invoice(Base):
     vendor_name: Mapped[str] = mapped_column(String(200), index=True)
     invoice_number: Mapped[str | None] = mapped_column(String(100), index=True)
     invoice_date: Mapped[date | None] = mapped_column(Date)
+    due_date: Mapped[date | None] = mapped_column(Date)
     subtotal: Mapped[float | None] = mapped_column(Float)
     tax: Mapped[float | None] = mapped_column(Float)
     amount: Mapped[float | None] = mapped_column(Float)

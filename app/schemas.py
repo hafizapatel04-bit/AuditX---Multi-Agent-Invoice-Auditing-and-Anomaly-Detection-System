@@ -16,13 +16,13 @@ class ExtractedInvoice(BaseModel):
     vendor_name: str
     invoice_number: str | None = None
     invoice_date: date | None = None
+    due_date: date | None = None
     subtotal: float | None = None
-    tax: float | None = None
-    amount: float | None = None   # grand total printed on the invoice
+    tax_amount: float | None = None
+    amount: float | None = None      # total, including tax
     currency: str = "INR"
     category: str | None = None
     line_items: list[LineItem] = []
-
 
 class InvoiceOut(ExtractedInvoice):
     model_config = ConfigDict(from_attributes=True)
