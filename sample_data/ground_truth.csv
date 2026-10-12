@@ -1,0 +1,17 @@
+filename,vendor,invoice_number,date,amount,currency,category,quality,expected_audit,note
+inv_01_clean.pdf,Tasty Bites Catering,INV2001,2026-07-22,4006.96,INR,Food,clean,none,
+inv_02_clean.pdf,Northwind Software Pvt Ltd,INV2002,2026-02-18,13321.9,INR,Software Subscription,clean,none,
+inv_03_clean.pdf,Tasty Bites Catering,INV2003,2026-09-17,3145.38,INR,Food,clean,none,
+inv_04_clean.pdf,Metro Office Mart,INV2004,2026-08-11,5739.21,INR,Office Supplies,clean,none,
+inv_05_clean.pdf,Orbit Cloud Services,INV2005,2026-02-16,9934.57,INR,Cloud Services,clean,none,
+inv_06_clean.pdf,Orbit Cloud Services,INV2006,2026-03-05,9858.5,INR,Cloud Services,clean,none,
+inv_07_clean.pdf,Metro Office Mart,INV2007,2026-02-01,6929.03,INR,Office Supplies,clean,none,
+inv_08_clean.pdf,Orbit Cloud Services,INV2008,2026-04-24,9791.1,INR,Cloud Services,clean,none,
+inv_09_scanned.pdf,Northwind Software Pvt Ltd,INV2009,2026-03-10,15607.46,INR,Software Subscription,scanned,none,scanned image-only PDF
+inv_10_scanned.pdf,Skyline Travels,INV2010,2026-03-02,10047.5,INR,Travel,scanned,none,scanned image-only PDF
+inv_11_poor.pdf,Skyline Travels,INV2011,2026-04-03,11046.62,INR,Travel,poor,none,poor image-only PDF
+inv_12_poor.pdf,Apex Digital Solutions,INV2012,2026-04-07,15725.15,INR,Software Subscription,poor,none,poor image-only PDF
+rig_duplicate.pdf,Tasty Bites Catering,INV2001,2026-07-22,4006.96,INR,Food,clean,duplicate,RIGGED: exact duplicate of inv_01_clean.pdf (process the original first)
+rig_unknown_vendor.pdf,Zenith Global Traders,INV9001,2026-02-02,14737.72,INR,Software Subscription,clean,unapproved_vendor,RIGGED: vendor not in approved list
+rig_wrong_total.pdf,Northwind Software Pvt Ltd,INV9002,2026-09-12,17991.9,INR,Software Subscription,clean,total_mismatch,RIGGED: printed total does not equal subtotal + tax
+rig_huge_amount.pdf,Northwind Software Pvt Ltd,INV9003,2026-08-07,242872.32,INR,Software Subscription,clean,anomaly,RIGGED: amount about 15x normal
