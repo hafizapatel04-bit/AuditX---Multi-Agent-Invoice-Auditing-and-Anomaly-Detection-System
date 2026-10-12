@@ -1,0 +1,61 @@
+id,invoice_number,vendor,date,amount,currency,category
+1,INV1001,Apex Digital Solutions,2026-04-26,12807.33,INR,Software Subscription
+2,INV1002,Northwind Software Pvt Ltd,2026-08-07,11738.64,INR,Software Subscription
+3,INV1003,Apex Digital Solutions,2026-05-12,13519.53,INR,Software Subscription
+4,INV1004,Northwind Software Pvt Ltd,2026-07-23,11376.49,INR,Software Subscription
+5,INV1005,Northwind Software Pvt Ltd,2026-03-19,11362.68,INR,Software Subscription
+6,INV1006,Northwind Software Pvt Ltd,2026-07-27,13381.75,INR,Software Subscription
+7,INV1007,Apex Digital Solutions,2026-04-12,13615.69,INR,Software Subscription
+8,INV1008,Northwind Software Pvt Ltd,2026-06-07,13492.51,INR,Software Subscription
+9,INV1009,Northwind Software Pvt Ltd,2026-08-01,11238.2,INR,Software Subscription
+10,INV1010,Northwind Software Pvt Ltd,2026-02-18,13398.47,INR,Software Subscription
+11,INV1011,Prime Equipments Ltd,2026-07-19,46936.64,INR,Equipment
+12,INV1012,Prime Equipments Ltd,2026-06-01,48672.12,INR,Equipment
+13,INV1013,Prime Equipments Ltd,2026-06-13,48497.96,INR,Equipment
+14,INV1014,Prime Equipments Ltd,2026-06-19,48115.97,INR,Equipment
+15,INV1015,Prime Equipments Ltd,2026-03-13,52978.91,INR,Equipment
+16,INV1016,Prime Equipments Ltd,2026-08-27,50370.29,INR,Equipment
+17,INV1017,Prime Equipments Ltd,2026-03-22,48615.96,INR,Equipment
+18,INV1018,Prime Equipments Ltd,2026-01-08,49068.28,INR,Equipment
+19,INV1019,Prime Equipments Ltd,2026-01-28,44970.23,INR,Equipment
+20,INV1020,Prime Equipments Ltd,2026-03-16,44601.44,INR,Equipment
+21,INV1021,Metro Office Mart,2026-01-05,5162.95,INR,Office Supplies
+22,INV1022,Metro Office Mart,2026-08-26,5598.98,INR,Office Supplies
+23,INV1023,Metro Office Mart,2026-09-08,5513.65,INR,Office Supplies
+24,INV1024,Metro Office Mart,2026-05-25,6123.47,INR,Office Supplies
+25,INV1025,Metro Office Mart,2026-03-11,4948.15,INR,Office Supplies
+26,INV1026,Metro Office Mart,2026-03-27,6438.93,INR,Office Supplies
+27,INV1027,Metro Office Mart,2026-07-14,5028.81,INR,Office Supplies
+28,INV1028,Metro Office Mart,2026-06-30,4818.62,INR,Office Supplies
+29,INV1029,Metro Office Mart,2026-04-30,5102.05,INR,Office Supplies
+30,INV1030,Metro Office Mart,2026-05-24,5560.62,INR,Office Supplies
+31,INV1031,Skyline Travels,2026-02-18,8515.38,INR,Travel
+32,INV1032,Skyline Travels,2026-04-09,8369.12,INR,Travel
+33,INV1033,Skyline Travels,2026-02-24,7618.77,INR,Travel
+34,INV1034,Skyline Travels,2026-09-06,11987.42,INR,Travel
+35,INV1035,Skyline Travels,2026-01-06,7123.84,INR,Travel
+36,INV1036,Skyline Travels,2026-08-07,6252.65,INR,Travel
+37,INV1037,Skyline Travels,2026-02-07,8649.25,INR,Travel
+38,INV1038,Skyline Travels,2026-01-03,10981.74,INR,Travel
+39,INV1039,Skyline Travels,2026-04-09,6445.69,INR,Travel
+40,INV1040,Skyline Travels,2026-02-23,6093.05,INR,Travel
+41,INV1041,Tasty Bites Catering,2026-04-05,2744.3,INR,Food
+42,INV1042,Tasty Bites Catering,2026-02-02,3164.72,INR,Food
+43,INV1043,Tasty Bites Catering,2026-02-04,1865.66,INR,Food
+44,INV1044,Tasty Bites Catering,2026-02-09,3316.85,INR,Food
+45,INV1045,Tasty Bites Catering,2026-07-29,2950.78,INR,Food
+46,INV1046,Tasty Bites Catering,2026-02-10,2873.95,INR,Food
+47,INV1047,Tasty Bites Catering,2026-04-10,2707.07,INR,Food
+48,INV1048,Tasty Bites Catering,2026-04-18,1707.68,INR,Food
+49,INV1049,Tasty Bites Catering,2026-01-10,1976.81,INR,Food
+50,INV1050,Tasty Bites Catering,2026-06-30,2013.96,INR,Food
+51,INV1051,Bluepeak Technologies,2026-07-30,9760.61,INR,Cloud Services
+52,INV1052,Orbit Cloud Services,2026-02-14,8758.4,INR,Cloud Services
+53,INV1053,Orbit Cloud Services,2026-05-03,9681.32,INR,Cloud Services
+54,INV1054,Orbit Cloud Services,2026-08-23,12493.91,INR,Cloud Services
+55,INV1055,Bluepeak Technologies,2026-01-18,10468.56,INR,Cloud Services
+56,INV1056,Orbit Cloud Services,2026-03-05,8279.59,INR,Cloud Services
+57,INV1057,Bluepeak Technologies,2026-03-14,11186.02,INR,Cloud Services
+58,INV1058,Orbit Cloud Services,2026-09-07,8553.15,INR,Cloud Services
+59,INV1059,Bluepeak Technologies,2026-02-05,13882.96,INR,Cloud Services
+60,INV1060,Orbit Cloud Services,2026-06-18,11539.25,INR,Cloud Services
