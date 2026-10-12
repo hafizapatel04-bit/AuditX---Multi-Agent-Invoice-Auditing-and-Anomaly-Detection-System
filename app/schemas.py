@@ -16,7 +16,9 @@ class ExtractedInvoice(BaseModel):
     vendor_name: str
     invoice_number: str | None = None
     invoice_date: date | None = None
-    amount: float | None = None
+    subtotal: float | None = None
+    tax: float | None = None
+    amount: float | None = None   # grand total printed on the invoice
     currency: str = "INR"
     category: str | None = None
     line_items: list[LineItem] = []
