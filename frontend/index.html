@@ -1,1 +1,102 @@
-#person c
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AuditX - Invoice audit workbench</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&family=Libre+Franklin:wght@400;500;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <svg class="mark" viewBox="0 0 24 24" width="26" height="26" aria-hidden="true">
+      <rect x="1" y="1" width="22" height="22" rx="4" fill="#1F6B52"/>
+      <path d="M6.5 12.5l3.8 3.8 7.2-8.3" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <span class="brand-name">AuditX</span>
+  </div>
+  <span class="tagline">Invoice audit workbench</span>
+  <span class="conn" id="conn" data-state="checking">
+    <span class="dot"></span><span id="connText">Checking server</span>
+  </span>
+</header>
+
+<main class="layout">
+
+  <aside class="intake">
+    <section class="panel">
+      <div class="panel-head"><h2>Add an invoice</h2></div>
+      <div class="panel-body">
+        <label class="drop" id="dropZone" for="fileInput">
+          <span class="drop-title">Drop a file here</span>
+          <span class="drop-sub">or click to choose one</span>
+          <span class="drop-types">PDF, PNG or JPG</span>
+          <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg">
+        </label>
+        <button id="uploadBtn" class="primary" disabled>Upload and analyze</button>
+        <div id="uploadStatus" class="status" role="status"></div>
+        <p class="hint">Reading an invoice can take up to a minute.</p>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Totals</h2></div>
+      <dl class="tally">
+        <div><dt>Invoices processed</dt><dd id="mTotal">-</dd></div>
+        <div><dt>Waiting for review</dt><dd id="mReview">-</dd></div>
+        <div><dt>Could not be read</dt><dd id="mUnknown">-</dd></div>
+      </dl>
+    </section>
+  </aside>
+
+  <div class="main">
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Invoices</h2>
+        <button id="refreshBtn" class="ghost">Refresh</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th><th>Invoice no.</th><th>Vendor</th><th>Date</th>
+              <th class="num">Amount</th><th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="invoiceRows"></tbody>
+        </table>
+      </div>
+      <div id="listMessage" class="status pad"></div>
+    </section>
+
+    <section class="panel" id="detailCard" hidden>
+      <div class="panel-head"><h2>Invoice details</h2></div>
+      <div class="panel-body" id="detailBody"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Breakdown</h2></div>
+      <div class="panel-body charts">
+        <figure class="chart">
+          <figcaption>Invoices by status</figcaption>
+          <div class="chart-box"><canvas id="statusChart"></canvas></div>
+        </figure>
+        <figure class="chart">
+          <figcaption>Invoices by category</figcaption>
+          <div class="chart-box"><canvas id="categoryChart"></canvas></div>
+        </figure>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<script src="script.js"></script>
+</body>
+</html>
