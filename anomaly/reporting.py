@@ -4,6 +4,7 @@ Python makes every decision (check results + final status).
 The LLM only writes a short plain-English summary of those decisions.
 If Ollama is off or fails, a template summary is used, so a report is always produced.
 """
+import re
 import ollama
 
 MODEL_NAME = "llama3.2:3b"   # same model as Person A
@@ -15,39 +16,86 @@ def _norm(value):
 
 
 def build_findings(audit: dict) -> list:
+    """Each finding is (label, ok, detail). A missing or unknown result is flagged, never passed silently."""
     findings = []
 
+    # --- Vendor: only "approved" passes ---
     v = _norm(audit.get("vendor_status"))
-    vendor_ok = bool(v) and not any(w in v for w in ["unapproved", "not approved", "unknown", "fail", "flag"])
-    findings.append(("Vendor Check", vendor_ok,
-                     "Approved vendor" if vendor_ok else "Vendor is not on the approved list"))
+    vendor_ok = v in ("approved", "approved vendor")
+    if vendor_ok:
+        vendor_detail = "Approved vendor"
+    elif v == "":
+        vendor_detail = "Vendor could not be verified"
+    elif v in ("unapproved", "not approved"):
+        vendor_detail = "Vendor is not on the approved list"
+    else:
+        vendor_detail = f"Vendor is not approved (status: {v})"
+    findings.append(("Vendor Check", vendor_ok, vendor_detail))
 
+    # --- Required fields: vendor, invoice number, date, amount ---
     f = _norm(audit.get("fields_status"))
-    fields_ok = not any(w in f for w in ["missing", "incomplete", "fail"])
-    findings.append(("Required Fields", fields_ok,
-                     "All required fields present" if fields_ok else "One or more required fields are missing"))
+    fields_ok = f in ("complete", "ok", "pass")
+    missing = audit.get("missing_fields") or []
+    if fields_ok:
+        fields_detail = "All required fields present"
+    elif missing:
+        fields_detail = "Missing: " + ", ".join(str(m).replace("_", " ") for m in missing)
+    else:
+        fields_detail = "One or more required fields are missing"
+    findings.append(("Required Fields", fields_ok, fields_detail))
 
+    # --- Duplicate ---
     d = _norm(audit.get("duplicate_status"))
-    dup_ok = ("no duplicate" in d) or ("not duplicate" in d) or ("duplicate" not in d)
-    findings.append(("Duplicate Check", dup_ok,
-                     "No duplicate found" if dup_ok else "Possible duplicate of an existing invoice"))
+    if d in ("no duplicate", "not duplicate", "none", "pass"):
+        dup_ok, dup_detail = True, "No duplicate found"
+    elif d == "exact duplicate":
+        dup_ok, dup_detail = False, "Exact duplicate of an existing invoice"
+    elif "duplicate" in d:
+        dup_ok, dup_detail = False, "Possible duplicate of an existing invoice"
+    elif d == "unchecked":
+        dup_ok, dup_detail = False, "Duplicate check could not be run"
+    else:
+        dup_ok, dup_detail = False, "Duplicate check result is missing"
+    findings.append(("Duplicate Check", dup_ok, dup_detail))
 
+    # --- Total: subtotal + tax should equal the printed total ---
+    t = _norm(audit.get("total_status"))
+    if t in ("mismatch", "mismatched", "total mismatch"):
+        try:
+            extra = f" (difference {abs(float(audit.get('total_difference'))):,.2f})"
+        except (TypeError, ValueError):
+            extra = ""
+        total_ok = False
+        total_detail = "Subtotal plus tax does not match the printed total" + extra
+    elif t in ("ok", "match", "matches"):
+        total_ok, total_detail = True, "Subtotal plus tax matches the total"
+    else:
+        total_ok, total_detail = True, "Not verified (subtotal or tax not found)"
+    findings.append(("Total Check", total_ok, total_detail))
+
+    # --- Policy ---
     p = _norm(audit.get("policy_status"))
-    policy_ok = (not p) or any(w in p for w in ["normal", "pass", "ok", "within"])
+    policy_ok = (not p) or re.search(r"\b(normal|pass|passed|ok|within)\b", p) is not None
     findings.append(("Policy Check", policy_ok,
                      "Within the normal approval limit" if policy_ok
                      else f"Extra approval needed ({p})"))
 
+    # --- Anomaly (dict from anomaly.engine.check_anomaly, or a plain string) ---
     a = audit.get("anomaly")
     if isinstance(a, dict):
-        is_anomaly = bool(a.get("is_anomaly"))
+        flagged = bool(a.get("is_anomaly"))
         reason = a.get("reason") or ""
+        findings.append(("Anomaly Detection", not flagged,
+                         (reason or "Amount is unusual compared with history") if flagged
+                         else "Amount is within the expected range"))
+    elif a or audit.get("anomaly_status"):
+        s = _norm(audit.get("anomaly_status") or a)
+        flagged = "anomal" in s and "no anomal" not in s and "not anomal" not in s
+        findings.append(("Anomaly Detection", not flagged,
+                         "Amount is unusual compared with history" if flagged
+                         else "Amount is within the expected range"))
     else:
-        is_anomaly = "anomal" in _norm(audit.get("anomaly_status") or a)
-        reason = ""
-    findings.append(("Anomaly Detection", not is_anomaly,
-                     (reason or "Amount is unusual compared with history") if is_anomaly
-                     else "Amount is within the expected range"))
+        findings.append(("Anomaly Detection", True, "Not checked (no comparable history)"))
     return findings
 
 
@@ -185,3 +233,12 @@ if __name__ == "__main__":
 
     print("\n=== TEST 3: same invoice, LLM switched off (template only) ===")
     print(generate_report(bad_invoice, bad_audit, use_llm=False)["report_text"])
+    wrong_total_invoice = {"invoice_number": "INV9002", "vendor": "Northwind Software Pvt Ltd",
+                           "total": 15000, "currency": "INR", "category": "Software Subscription",
+                           "date": "2026-03-04"}
+    wrong_total_audit = {"vendor_status": "approved", "fields_status": "complete",
+                         "duplicate_status": "unchecked", "total_status": "mismatch",
+                         "total_difference": 2450.5, "policy_status": "manager_approval_required",
+                         "anomaly": {"is_anomaly": False, "reason": ""}}
+    print("\n=== TEST 4: total mismatch and unchecked duplicate (template only) ===")
+    print(generate_report(wrong_total_invoice, wrong_total_audit, use_llm=False)["report_text"])
