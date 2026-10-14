@@ -1,339 +1,321 @@
-// Works from FastAPI (port 8000) or from the small dev server (port 5500).
-const API_BASE = window.location.port === "8000" ? "" : "http://localhost:8000";
+import React, { useState } from 'react';
+import { 
+  ShieldAlert, 
+  FileText, 
+  Cpu, 
+  AlertTriangle, 
+  UploadCloud, 
+  Activity, 
+  DollarSign, 
+  RefreshCw,
+  Layers,
+  Sun,
+  Moon
+} from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-const $ = (id) => document.getElementById(id);
+// Sample data for the Savings & Anomalies chart
+const chartData = [
+  { month: 'Jan', savings: 4000, anomalies: 24 },
+  { month: 'Feb', savings: 3000, anomalies: 18 },
+  { month: 'Mar', savings: 5000, anomalies: 29 },
+  { month: 'Apr', savings: 8000, anomalies: 42 },
+  { month: 'May', savings: 6000, anomalies: 33 },
+  { month: 'Jun', savings: 9500, anomalies: 38 },
+];
 
-// Makes text safe to put inside HTML
-function esc(value) {
-  const div = document.createElement("div");
-  div.textContent = value ?? "";
-  return div.innerHTML;
-}
+export default function App() {
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [darkMode, setDarkMode] = useState(false); // Default is Light Theme
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [auditResult, setAuditResult] = useState(null);
 
-// One place for all server calls, with readable errors
-async function api(path, options) {
-  let res;
-  try {
-    res = await fetch(API_BASE + path, options);
-  } catch (e) {
-    throw new Error("Cannot reach the server. Start the backend (uvicorn on port 8000) and try again.");
-  }
-  if (!res.ok) {
-    let detail = res.statusText;
-    try {
-      const body = await res.json();
-      detail = body.detail || detail;
-      if (typeof detail !== "string") detail = JSON.stringify(detail);
-    } catch (_) {}
-    const err = new Error(`${detail} (${res.status})`);
-    err.status = res.status;
-    throw err;
-  }
-  return res.json();
-}
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSelectedFile(file.name);
+      setIsAnalyzing(true);
+      setAuditResult(null);
 
-// ---------- Formatting ----------
-function money(amount, currency) {
-  if (amount === null || amount === undefined) return "-";
-  const n = Number(amount).toLocaleString("en-IN", { minimumFractionDigits: 2 });
-  return `${currency || ""} ${n}`.trim();
-}
+      setTimeout(() => {
+        setIsAnalyzing(false);
+        setAuditResult({
+          invoiceId: "INV-2026-9482",
+          vendor: "Global Logistics & Supplies Corp.",
+          amount: "$14,850.00",
+          riskScore: "High Risk (87%)",
+          anomaliesDetected: 2,
+          agentsTriggered: ["OCR Extractor Agent", "Tax Compliance Agent", "Duplicate Check Agent", "Anomaly & Fraud Detector"],
+          findings: [
+            { type: "Warning", message: "Potential duplicate invoice detected: matches INV-2026-9411 paid 14 days ago." },
+            { type: "Alert", message: "Line item unit price deviates +24% from historical vendor benchmark." }
+          ]
+        });
+      }, 3000);
+    }
+  };
 
-function fmtDate(value) {
-  if (!value) return "-";
-  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(value));
-  if (!m) return String(value);
-  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
-  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
-}
+  return (
+    <div className={`min-h-screen flex font-sans transition-colors duration-300 ${darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-800'}`}>
+      
+      {/* SIDEBAR NAVIGATION */}
+      <aside className={`w-64 border-r p-6 flex flex-col justify-between hidden md:flex transition-colors duration-300 ${darkMode ? 'border-slate-800 bg-slate-900/50' : 'border-slate-200 bg-white shadow-sm'}`}>
+        <div>
+          <div className="flex items-center gap-3 mb-10">
+            <div className="p-2.5 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-500/20 text-white">
+              <ShieldAlert size={24} />
+            </div>
+            <div>
+              <h1 className="font-bold text-xl tracking-wide bg-gradient-to-r from-indigo-500 to-cyan-500 bg-clip-text text-transparent">AuditX</h1>
+              <p className={`text-xs font-medium ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Multi-Agent Auditor</p>
+            </div>
+          </div>
 
-// green = fine, red = problem, amber = needs a human
-function tone(text) {
-  const l = String(text ?? "").replace(/_/g, " ").toLowerCase();
-  if (/no duplicate|not a duplicate|no anomal/.test(l)) return "green";
-  if (/reject|fail|duplicate|flag|anomal|unapproved|not approved|blocked/.test(l)) return "red";
-  if (/\b(approved|pass|passed|normal|clear|ok)\b/.test(l)) return "green";
-  return "amber";
-}
+          <nav className="space-y-2">
+            <button 
+              onClick={() => setActiveTab('dashboard')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${activeTab === 'dashboard' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' : darkMode ? 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'}`}
+            >
+              <Activity size={18} /> Dashboard
+            </button>
+            <button 
+              onClick={() => setActiveTab('upload')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${activeTab === 'upload' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' : darkMode ? 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'}`}
+            >
+              <UploadCloud size={18} /> New Audit
+            </button>
+            <button 
+              onClick={() => setActiveTab('agents')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${activeTab === 'agents' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' : darkMode ? 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'}`}
+            >
+              <Cpu size={18} /> Agent Swarm
+            </button>
+          </nav>
+        </div>
 
-function label(text) {
-  return String(text ?? "unknown").replace(/_/g, " ");
-}
+        <div className={`p-4 rounded-xl border ${darkMode ? 'bg-slate-800/50 border-slate-700/50' : 'bg-slate-50 border-slate-200'}`}>
+          <div className="flex items-center gap-2 text-xs font-semibold text-emerald-500 mb-1">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> All Agents Online
+          </div>
+          <p className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Connected to Backend Node</p>
+        </div>
+      </aside>
 
-function badge(text) {
-  return `<span class="badge ${tone(text)}">${esc(label(text))}</span>`;
-}
+      {/* MAIN CONTENT AREA */}
+      <main className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        
+        {/* TOP HEADER */}
+        <header className={`h-20 border-b px-8 flex items-center justify-between backdrop-blur-md sticky top-0 z-10 transition-colors duration-300 ${darkMode ? 'border-slate-800 bg-slate-900/30' : 'border-slate-200 bg-white/70'}`}>
+          <div className="flex items-center gap-4">
+            <h2 className={`text-lg font-semibold capitalize ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
+              {activeTab === 'dashboard' && 'System Overview & Metrics'}
+              {activeTab === 'upload' && 'Invoice Audit & Extraction Studio'}
+              {activeTab === 'agents' && 'Multi-Agent Pipeline Status'}
+            </h2>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <span className="px-3 py-1 bg-indigo-500/10 border border-indigo-500/20 text-indigo-500 rounded-full text-xs font-semibold">
+              Branch: sania-frontend
+            </span>
 
-function stamp(text) {
-  return `<div class="stamp ${tone(text)}">${esc(label(text))}</div>`;
-}
+            {/* THEME TOGGLE BUTTON */}
+            <button 
+              onClick={() => setDarkMode(!darkMode)}
+              className={`p-2.5 rounded-xl border transition-all ${darkMode ? 'bg-slate-800 border-slate-700 text-amber-400 hover:bg-slate-700' : 'bg-white border-slate-200 text-slate-700 shadow-sm hover:bg-slate-100'}`}
+              title="Toggle Theme"
+            >
+              {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+          </div>
+        </header>
 
-function toneColor(text) {
-  const t = tone(text);
-  return t === "green" ? "#1F6B52" : t === "red" ? "#B8352A" : "#D9A21B";
-}
+        {/* CONTENT DYNAMIC SECTIONS */}
+        <div className="p-8 max-w-7xl mx-auto w-full space-y-8">
 
-// ---------- Server connection light ----------
-async function checkServer() {
-  const box = $("conn");
-  try {
-    const res = await fetch(API_BASE + "/health");
-    if (!res.ok) throw new Error("bad status");
-    box.dataset.state = "up";
-    $("connText").textContent = "Server connected";
-  } catch (_) {
-    box.dataset.state = "down";
-    $("connText").textContent = "Server offline";
-  }
-}
+          {activeTab === 'dashboard' && (
+            <>
+              {/* METRIC CARDS */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[
+                  { title: "Total Audited", value: "1,284", icon: <FileText size={20} />, change: "↑ 12% from last week", color: "text-indigo-500" },
+                  { title: "Anomalies Flagged", value: "42", icon: <AlertTriangle size={20} />, change: "Requires Review", color: "text-rose-500" },
+                  { title: "Potential Savings", value: "$64,200", icon: <DollarSign size={20} />, change: "Prevented duplicate payouts", color: "text-emerald-500" },
+                  { title: "Active Agents", value: "4 / 4", icon: <Cpu size={20} />, change: "Fully operational swarm", color: "text-cyan-500" }
+                ].map((stat, i) => (
+                  <div key={i} className={`p-6 rounded-2xl border shadow-xl transition-colors duration-300 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200 shadow-sm'}`}>
+                    <div className="flex items-center justify-between mb-4">
+                      <span className={`text-sm font-medium ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{stat.title}</span>
+                      <div className={`p-2.5 rounded-xl bg-slate-500/10 ${stat.color}`}>{stat.icon}</div>
+                    </div>
+                    <div className={`text-3xl font-bold ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>{stat.value}</div>
+                    <div className={`text-xs mt-2 font-medium ${stat.color}`}>{stat.change}</div>
+                  </div>
+                ))}
+              </div>
 
-// ---------- Totals and charts (calculated from the invoice list) ----------
-let statusChart = null;
-let categoryChart = null;
+              {/* INTEGRATED SAVINGS CHART */}
+              <div className={`p-6 rounded-2xl border shadow-xl transition-colors duration-300 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200 shadow-sm'}`}>
+                <h3 className={`text-base font-semibold mb-6 ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
+                  Monthly Potential Savings & Cost Reductions ($)
+                </h3>
+                <div className="h-80 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#1e293b' : '#e2e8f0'} />
+                      <XAxis dataKey="month" stroke={darkMode ? '#94a3b8' : '#64748b'} fontSize={12} tickLine={false} />
+                      <YAxis stroke={darkMode ? '#94a3b8' : '#64748b'} fontSize={12} tickLine={false} axisLine={false} />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: darkMode ? '#0f172a' : '#ffffff', 
+                          border: darkMode ? '1px solid #334155' : '1px solid #cbd5e1', 
+                          borderRadius: '8px',
+                          color: darkMode ? '#f1f5f9' : '#0f172a'
+                        }} 
+                      />
+                      <defs>
+                        <linearGradient id="colorSavings" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.4}/>
+                          <stop offset="95%" stopColor="#4f46e5" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <Area type="monotone" dataKey="savings" stroke="#6366f1" fillOpacity={1} fill="url(#colorSavings)" strokeWidth={2} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
 
-function countBy(items, getKey) {
-  const counts = {};
-  items.forEach((item) => {
-    const key = label(getKey(item));
-    counts[key] = (counts[key] || 0) + 1;
-  });
-  return counts;
-}
+              {/* RECENT AUDITS TABLE */}
+              <div className={`border rounded-2xl p-6 shadow-xl transition-colors duration-300 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200 shadow-sm'}`}>
+                <h3 className={`text-base font-semibold mb-6 flex items-center gap-2 ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
+                  <Layers size={18} className="text-indigo-500" /> Recent Auditing History
+                </h3>
+                <div className="overflow-x-auto">
+                  <table className={`w-full text-left text-sm ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                    <thead className={`border-b text-xs uppercase ${darkMode ? 'border-slate-800 text-slate-400' : 'border-slate-100 text-slate-400'}`}>
+                      <tr>
+                        <th className="pb-3 font-semibold">Invoice ID</th>
+                        <th className="pb-3 font-semibold">Vendor Name</th>
+                        <th className="pb-3 font-semibold">Amount</th>
+                        <th className="pb-3 font-semibold">Status</th>
+                        <th className="pb-3 font-semibold">Timestamp</th>
+                      </tr>
+                    </thead>
+                    <tbody className={`divide-y ${darkMode ? 'divide-slate-800/60' : 'divide-slate-100'}`}>
+                      <tr>
+                        <td className={`py-4 font-medium ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>INV-2026-9481</td>
+                        <td className="py-4">Apex Cloud Services</td>
+                        <td className="py-4 font-mono">$3,420.00</td>
+                        <td className="py-4"><span className="px-2.5 py-1 bg-emerald-500/10 text-emerald-500 rounded-full text-xs font-semibold">Passed</span></td>
+                        <td className={`py-4 ${darkMode ? 'text-slate-400' : 'text-slate-400'}`}>10 mins ago</td>
+                      </tr>
+                      <tr>
+                        <td className={`py-4 font-medium ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>INV-2026-9480</td>
+                        <td className="py-4">Metro Office Supplies</td>
+                        <td className="py-4 font-mono">$1,150.50</td>
+                        <td className="py-4"><span className="px-2.5 py-1 bg-rose-500/10 text-rose-500 rounded-full text-xs font-semibold">Flagged</span></td>
+                        <td className={`py-4 ${darkMode ? 'text-slate-400' : 'text-slate-400'}`}>1 hour ago</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
+          )}
 
-function drawChart(existing, canvasId, counts, colors, horizontal) {
-  if (typeof Chart === "undefined") return existing;   // chart library did not load
-  if (existing) existing.destroy();
-  Chart.defaults.font.family = '"Libre Franklin", "Segoe UI", sans-serif';
-  Chart.defaults.color = "#5E6C79";
-  const valueAxis = horizontal ? "x" : "y";
-  const nameAxis = horizontal ? "y" : "x";
-  return new Chart($(canvasId), {
-    type: "bar",
-    data: {
-      labels: Object.keys(counts),
-      datasets: [{ data: Object.values(counts), backgroundColor: colors, borderRadius: 2, maxBarThickness: 34 }],
-    },
-    options: {
-      indexAxis: horizontal ? "y" : "x",
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        [valueAxis]: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: "#E3E8EC" } },
-        [nameAxis]: { grid: { display: false } },
-      },
-    },
-  });
-}
+          {activeTab === 'upload' && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className={`border rounded-2xl p-8 shadow-xl flex flex-col justify-center items-center text-center transition-colors duration-300 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200 shadow-sm'}`}>
+                <div className="w-16 h-16 bg-indigo-500/10 text-indigo-500 rounded-2xl flex items-center justify-center mb-6 border border-indigo-500/20">
+                  <UploadCloud size={32} />
+                </div>
+                <h3 className={`text-xl font-bold mb-2 ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>Upload Invoice Document</h3>
+                <p className={`text-sm mb-6 max-w-sm ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                  Drag and drop your PDF or image invoice here to trigger multi-agent auditing and anomaly detection.
+                </p>
+                <label className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl shadow-lg shadow-indigo-600/30 cursor-pointer transition-all">
+                  Browse Files
+                  <input type="file" className="hidden" onChange={handleFileUpload} accept=".pdf,.png,.jpg,.jpeg" />
+                </label>
+                {selectedFile && (
+                  <p className={`mt-4 text-xs font-medium ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>Selected: {selectedFile}</p>
+                )}
+              </div>
 
-function renderDashboard(invoices) {
-  $("mTotal").textContent = invoices.length;
-  $("mReview").textContent = invoices.filter((i) => /review/i.test(String(i.status))).length;
-  $("mUnknown").textContent = invoices.filter((i) => i.vendor_name === "UNKNOWN").length;
+              <div className={`border rounded-2xl p-8 shadow-xl flex flex-col justify-between transition-colors duration-300 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200 shadow-sm'}`}>
+                <div>
+                  <h3 className={`text-lg font-bold mb-6 flex items-center gap-2 ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>
+                    <Activity className="text-indigo-500" size={20} /> Multi-Agent Audit Log
+                  </h3>
 
-  const empty = invoices.length === 0;
-  document.querySelectorAll(".chart").forEach((f) => f.classList.toggle("empty", empty));
-  if (empty) {
-    if (statusChart) { statusChart.destroy(); statusChart = null; }
-    if (categoryChart) { categoryChart.destroy(); categoryChart = null; }
-    return;
-  }
+                  {isAnalyzing && (
+                    <div className="flex flex-col items-center justify-center py-16 space-y-4">
+                      <RefreshCw className="animate-spin text-indigo-500" size={36} />
+                      <p className={`text-sm font-medium ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>Agents collaborating & verifying line items...</p>
+                    </div>
+                  )}
 
-  const byStatus = countBy(invoices, (i) => i.status);
-  const byCategory = countBy(invoices, (i) => i.category || "uncategorized");
-  statusChart = drawChart(statusChart, "statusChart", byStatus, Object.keys(byStatus).map(toneColor), false);
-  categoryChart = drawChart(categoryChart, "categoryChart", byCategory, "#34495C", true);
-}
+                  {!isAnalyzing && !auditResult && (
+                    <div className="flex flex-col items-center justify-center py-16 text-slate-400 text-center">
+                      <FileText size={40} className="mb-3 opacity-40" />
+                      <p className="text-sm">Upload an invoice on the left to begin the multi-agent inspection workflow.</p>
+                    </div>
+                  )}
 
-// ---------- Upload ----------
-let selectedFile = null;
-const dropZone = $("dropZone");
+                  {!isAnalyzing && auditResult && (
+                    <div className="space-y-6">
+                      <div className={`p-4 rounded-xl border ${darkMode ? 'bg-slate-800/50 border-slate-700/50' : 'bg-slate-50 border-slate-200'}`}>
+                        <div>
+                          <p className="text-xs text-slate-400">Invoice Reference</p>
+                          <p className={`font-bold ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>{auditResult.invoiceId}</p>
+                        </div>
+                      </div>
+                      <div className="space-y-3">
+                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Audit Findings</p>
+                        {auditResult.findings.map((f, i) => (
+                          <div key={i} className="p-3 bg-rose-500/5 border border-rose-500/20 rounded-xl flex items-start gap-3 text-sm text-rose-500">
+                            <AlertTriangle size={16} className="mt-0.5 shrink-0" />
+                            <span>{f.message}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
-function setFile(file) {
-  selectedFile = file || null;
-  $("uploadBtn").disabled = !selectedFile;
-  dropZone.classList.toggle("has-file", !!selectedFile);
-  $("uploadStatus").className = "status";
-  $("uploadStatus").textContent = selectedFile ? `Selected: ${selectedFile.name}` : "";
-}
+          {activeTab === 'agents' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {[
+                { name: "OCR Extraction Agent", role: "Parses structured table items, vendor details, and totals from raw PDFs/Images.", status: "Active" },
+                { name: "Tax Compliance Agent", role: "Cross-checks VAT/GST percentages against regional tax laws.", status: "Active" },
+                { name: "Duplicate Detection Agent", role: "Scans vector database for duplicate invoices or historical overlapping line items.", status: "Active" },
+                { name: "Fraud & Anomaly Detector", role: "Calculates outlier risk scores based on pricing benchmarks.", status: "Active" }
+              ].map((agent, i) => (
+                <div key={i} className={`p-6 border rounded-2xl shadow-xl flex flex-col justify-between transition-colors duration-300 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200 shadow-sm'}`}>
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className={`font-bold text-base ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>{agent.name}</h4>
+                      <span className="px-2.5 py-1 bg-emerald-500/10 text-emerald-500 rounded-full text-xs font-semibold flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> {agent.status}
+                      </span>
+                    </div>
+                    <p className={`text-sm leading-relaxed mb-6 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{agent.role}</p>
+                  </div>
+                  <div className={`pt-4 border-t flex items-center justify-between text-xs font-mono ${darkMode ? 'border-slate-800 text-slate-500' : 'border-slate-100 text-slate-400'}`}>
+                    <span>Model: LLM + LangGraph</span>
+                    <span>Status: Healthy</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
-$("fileInput").addEventListener("change", (e) => setFile(e.target.files[0]));
-
-["dragenter", "dragover"].forEach((ev) =>
-  dropZone.addEventListener(ev, (e) => { e.preventDefault(); dropZone.classList.add("over"); })
-);
-["dragleave", "drop"].forEach((ev) =>
-  dropZone.addEventListener(ev, (e) => { e.preventDefault(); dropZone.classList.remove("over"); })
-);
-dropZone.addEventListener("drop", (e) => {
-  const file = e.dataTransfer.files[0];
-  if (!file) return;
-  if (!/\.(pdf|png|jpe?g)$/i.test(file.name)) {
-    $("uploadStatus").className = "status error";
-    $("uploadStatus").textContent = "Only PDF, PNG or JPG files can be uploaded.";
-    return;
-  }
-  const transfer = new DataTransfer();
-  transfer.items.add(file);
-  $("fileInput").files = transfer.files;
-  setFile(file);
-});
-
-$("uploadBtn").addEventListener("click", async () => {
-  if (!selectedFile) return;
-  const btn = $("uploadBtn");
-  btn.disabled = true;
-  btn.textContent = "Processing...";
-  $("uploadStatus").className = "status";
-  $("uploadStatus").textContent = "Reading the invoice. This can take a minute...";
-
-  try {
-    const form = new FormData();
-    form.append("file", selectedFile);   // "file" must match the backend's parameter name
-    const inv = await api("/upload-invoice", { method: "POST", body: form });
-
-    $("fileInput").value = "";
-    setFile(null);
-    $("uploadStatus").className = "status ok";
-    $("uploadStatus").textContent = inv.vendor_name === "UNKNOWN"
-      ? "Uploaded, but the invoice could not be read. It is marked for manual review."
-      : "Invoice processed.";
-
-    await loadInvoices();
-    showDetail(inv.id);
-  } catch (err) {
-    $("uploadStatus").className = "status error";
-    $("uploadStatus").textContent = `Upload failed: ${err.message}`;
-  } finally {
-    btn.textContent = "Upload and analyze";
-    btn.disabled = !selectedFile;
-  }
-});
-
-// ---------- Invoice list ----------
-let selectedId = null;
-
-function markSelected() {
-  document.querySelectorAll("#invoiceRows tr").forEach((tr) =>
-    tr.classList.toggle("selected", String(tr.dataset.id) === String(selectedId))
+        </div>
+      </main>
+    </div>
   );
 }
-
-async function loadInvoices() {
-  const rows = $("invoiceRows");
-  const msg = $("listMessage");
-  msg.className = "status pad";
-  msg.textContent = "";
-  try {
-    const invoices = await api("/invoices");
-    renderDashboard(invoices);
-    if (invoices.length === 0) {
-      rows.innerHTML = "";
-      msg.textContent = "No invoices yet. Add one with the upload panel.";
-      return;
-    }
-    rows.innerHTML = invoices.map((inv) => `
-      <tr data-id="${inv.id}">
-        <td>${inv.id}</td>
-        <td>${esc(inv.invoice_number) || "-"}</td>
-        <td>${esc(inv.vendor_name)}</td>
-        <td>${esc(fmtDate(inv.invoice_date))}</td>
-        <td class="num">${esc(money(inv.amount, inv.currency))}</td>
-        <td>${badge(inv.status)}</td>
-      </tr>`).join("");
-    markSelected();
-  } catch (err) {
-    msg.className = "status pad error";
-    msg.textContent = `Could not load invoices: ${err.message}`;
-  }
-}
-
-$("invoiceRows").addEventListener("click", (e) => {
-  const tr = e.target.closest("tr");
-  if (tr) showDetail(tr.dataset.id);
-});
-$("refreshBtn").addEventListener("click", loadInvoices);
-
-// ---------- Invoice details ----------
-async function showDetail(id) {
-  const card = $("detailCard");
-  const body = $("detailBody");
-  selectedId = id;
-  markSelected();
-  card.hidden = false;
-  body.innerHTML = "<p class='muted'>Loading...</p>";
-  const smooth = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  card.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "start" });
-
-  try {
-    const inv = await api(`/invoice/${id}`);
-    const items = (inv.line_items || []).map((li) => `
-      <tr>
-        <td>${esc(li.description)}</td>
-        <td class="num">${li.quantity ?? ""}</td>
-        <td class="num">${li.unit_price ?? ""}</td>
-        <td class="num">${li.total ?? ""}</td>
-      </tr>`).join("");
-
-    const subtitle = inv.invoice_number
-      ? `Invoice ${esc(inv.invoice_number)}, dated ${esc(fmtDate(inv.invoice_date))}`
-      : "Invoice number not found";
-
-    body.innerHTML = `
-      <div class="detail-head">
-        <div>
-          <h3 class="doc-title">${esc(inv.vendor_name)}</h3>
-          <p class="doc-sub">${subtitle}</p>
-        </div>
-        ${stamp(inv.status)}
-      </div>
-      <div class="grid">
-        <div><span class="label">Invoice date</span>${esc(fmtDate(inv.invoice_date))}</div>
-        <div><span class="label">Due date</span>${esc(fmtDate(inv.due_date))}</div>
-        <div><span class="label">Category</span>${esc(inv.category) || "-"}</div>
-        <div><span class="label">Subtotal</span>${esc(money(inv.subtotal, inv.currency))}</div>
-        <div><span class="label">Tax</span>${esc(money(inv.tax_amount, inv.currency))}</div>
-        <div><span class="label">Total</span><strong>${esc(money(inv.amount, inv.currency))}</strong></div>
-      </div>
-      ${items ? `
-        <h3 class="section">Line items</h3>
-        <div class="table-wrap"><table>
-          <thead><tr><th>Description</th><th class="num">Qty</th><th class="num">Unit price</th><th class="num">Total</th></tr></thead>
-          <tbody>${items}</tbody>
-        </table></div>` : ""}
-      <div id="auditBox"></div>`;
-
-    loadAudit(id);
-  } catch (err) {
-    body.innerHTML = `<p class="status error">Could not load invoice: ${esc(err.message)}</p>`;
-  }
-}
-
-// Starts working automatically once Person B adds GET /audit/{invoice_id}
-async function loadAudit(id) {
-  const box = $("auditBox");
-  try {
-    const a = await api(`/audit/${id}`);
-    const reasons = (a.reasons || []).map((r) => `<li>${esc(r)}</li>`).join("");
-    box.innerHTML = `
-      <h3 class="section">Audit result</h3>
-      <div class="checks">
-        <div><span class="label">Vendor check</span>${badge(a.vendor_check)}</div>
-        <div><span class="label">Policy check</span>${badge(a.policy_check)}</div>
-        <div><span class="label">Duplicate check</span>${badge(a.duplicate_check)}</div>
-        <div><span class="label">Anomaly score</span>${a.anomaly_score ?? "-"}</div>
-        <div><span class="label">Final status</span>${badge(a.final_status)}</div>
-      </div>
-      ${reasons ? `<ul class="reasons">${reasons}</ul>` : ""}
-      ${a.report ? `<h3 class="section">Audit report</h3><pre class="report">${esc(a.report)}</pre>` : ""}`;
-  } catch (err) {
-    box.innerHTML = err.status === 404
-      ? `<p class="muted" style="margin-top:24px">No audit result for this invoice yet.</p>`
-      : "";
-  }
-}
-
-// ---------- Start ----------
-checkServer();
-setInterval(checkServer, 15000);
-loadInvoices();

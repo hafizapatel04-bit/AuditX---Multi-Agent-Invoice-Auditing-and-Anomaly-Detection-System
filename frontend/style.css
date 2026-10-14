@@ -1,186 +1,26 @@
-/* AuditX - audit workpaper look.
-   Change colors in the :root block below and the whole page follows. */
-:root {
-  --paper: #edf0f3;       /* page background */
-  --sheet: #FBFCFC;       /* panels */
-  --ink: #1C2B39;         /* text */
-  --muted: #5E6C79;
-  --rule: #552c4b;        /* borders */
-  --rule-soft: #2f5370;   /* faint row lines */
-  --green: #1F6B52;  --green-tint: #E4F0EA;   /* passed, approved */
-  --red: #B8352A;    --red-tint: #F7E4E1;     /* flagged */
-  --amber: #7A5A0A;  --amber-tint: #FBF1CF;  /* needs a human */
-  --serif: "Libre Caslon Text", Georgia, "Times New Roman", serif;
-  --sans: "Libre Franklin", "Segoe UI", system-ui, sans-serif;
-}
-
-* { box-sizing: border-box; }
-[hidden] { display: none !important; }
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 body {
+  background-color: #020617;
+  color: #f8fafc;
   margin: 0;
-  background: var(--paper);
-  color: var(--ink);
-  font-family: var(--sans);
-  font-size: 15px;
-  line-height: 1.55;
-  font-variant-numeric: tabular-nums;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }
 
-/* ---------- Top bar ---------- */
-.topbar {
-  display: flex; align-items: center; gap: 14px;
-  padding: 12px 28px;
-  background: var(--sheet);
-  border-bottom: 1px solid var(--rule);
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
-.brand { display: flex; align-items: center; gap: 10px; }
-.brand-name { font-family: var(--serif); font-weight: 700; font-size: 22px; }
-.tagline { color: var(--muted); font-size: 14px; padding-left: 14px; border-left: 1px solid var(--rule); }
-.conn { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
-.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--rule); }
-.conn[data-state="up"] .dot { background: var(--green); }
-.conn[data-state="down"] .dot { background: var(--red); }
-
-/* ---------- Layout ---------- */
-.layout {
-  max-width: 1220px; margin: 0 auto; padding: 24px 24px 64px;
-  display: grid; grid-template-columns: 330px minmax(0, 1fr);
-  gap: 24px; align-items: start;
+::-webkit-scrollbar-track {
+  background: #090d16;
 }
-.intake { position: sticky; top: 20px; display: grid; gap: 20px; }
-.main { display: grid; gap: 20px; min-width: 0; }
-
-.panel { background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px; }
-.panel-head {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 14px 20px; border-bottom: 1px solid var(--rule-soft);
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 3px;
 }
-.panel-head h2 { margin: 0; font-family: var(--serif); font-size: 18px; font-weight: 700; }
-.panel-body { padding: 20px; }
-.muted { color: var(--muted); }
-
-/* ---------- Upload ---------- */
-.drop {
-  position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px;
-  padding: 26px 16px; text-align: center; cursor: pointer;
-  border: 1.5px dashed var(--rule); border-radius: 10px; background: var(--paper);
-  transition: border-color .15s, background .15s;
-}
-.drop:hover, .drop.over { border-color: var(--green); background: var(--green-tint); }
-.drop.has-file { border-style: solid; border-color: var(--green); background: var(--green-tint); }
-.drop:focus-within { outline: 2px solid var(--ink); outline-offset: 2px; }
-.drop input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
-.drop-title { font-weight: 600; }
-.drop-sub { color: var(--muted); font-size: 14px; }
-.drop-types { margin-top: 8px; font-size: 12.5px; color: var(--muted); }
-
-button { font-family: inherit; font-size: 14px; font-weight: 600; border-radius: 10px; cursor: pointer; }
-button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
-button.primary {
-  width: 100%; margin-top: 14px; padding: 11px 16px;
-  background: var(--green); color: #fff; border: 1px solid var(--green);
-}
-button.primary:hover { background: #17543F; }
-button.primary:disabled { background: var(--rule-soft); border-color: var(--rule-soft); color: var(--muted); cursor: not-allowed; }
-button.ghost { background: transparent; color: var(--ink); border: 1px solid var(--rule); padding: 6px 14px; }
-button.ghost:hover { background: var(--paper); }
-
-.status { margin-top: 12px; font-size: 14px; color: var(--muted); min-height: 1.2em; }
-.status.ok { color: var(--green); }
-.status.error { color: var(--red); }
-.status.pad { margin-top: 0; padding: 0 20px 16px; }
-.hint { margin: 10px 0 0; font-size: 13px; color: var(--muted); }
-
-/* ---------- Totals (like a trial balance) ---------- */
-.tally { margin: 0; padding: 6px 20px 12px; }
-.tally > div { display: flex; align-items: baseline; padding: 10px 0; }
-.tally dt { flex: 1; display: flex; align-items: baseline; }
-.tally dt::after { content: ""; flex: 1; margin: 0 8px; border-bottom: 1px dotted var(--rule); transform: translateY(-3px); }
-.tally dd { margin: 0; min-width: 2ch; text-align: right; font-family: var(--serif); font-size: 22px; font-weight: 700; }
-
-/* ---------- Tables ---------- */
-.table-wrap { overflow-x: auto; }
-.panel-body .table-wrap { border: 1px solid var(--rule-soft); border-radius: 10px; }
-table { width: 100%; border-collapse: collapse; min-width: 620px; }
-th {
-  text-align: left; font-size: 13px; font-weight: 600; color: var(--muted);
-  padding: 10px 16px; border-bottom: 2px solid var(--rule); white-space: nowrap;
-}
-td { padding: 11px 16px; border-bottom: 1px solid var(--rule-soft); font-size: 14.5px; }
-tbody tr:last-child td { border-bottom: 0; }
-#invoiceRows tr { cursor: pointer; }
-#invoiceRows tr:hover { background: var(--paper); }
-#invoiceRows tr.selected { background: var(--green-tint); box-shadow: inset 3px 0 0 var(--green); }
-.num { text-align: right; }
-
-/* ---------- Status marks ---------- */
-.badge {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 2px 8px; border-radius: 3px;
-  font-size: 13px; font-weight: 600; text-transform: capitalize; white-space: nowrap;
-}
-.badge::before { font-weight: 800; }
-.badge.green { background: var(--green-tint); color: var(--green); }
-.badge.green::before { content: "\2713"; }
-.badge.red { background: var(--red-tint); color: var(--red); }
-.badge.red::before { content: "\2715"; }
-.badge.amber { background: var(--amber-tint); color: var(--amber); }
-.badge.amber::before { content: "!"; }
-
-/* The rubber stamp: the one memorable element */
-.stamp {
-  flex: none; padding: 6px 14px;
-  font-weight: 800; font-size: 15px; text-transform: uppercase; letter-spacing: .06em;
-  border: 3px double currentColor; border-radius: 10px;
-  transform: rotate(-3deg); opacity: .92; mix-blend-mode: multiply;
-  animation: press .22s ease-out;
-}
-.stamp.green { color: var(--green); }
-.stamp.red { color: var(--red); }
-.stamp.amber { color: var(--amber); }
-@keyframes press {
-  from { transform: rotate(-3deg) scale(1.25); opacity: 0; }
-  to   { transform: rotate(-3deg) scale(1);    opacity: .92; }
-}
-
-/* ---------- Invoice details ---------- */
-.detail-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 20px; }
-.doc-title { margin: 0; font-family: var(--serif); font-size: 22px; font-weight: 700; }
-.doc-sub { margin: 2px 0 0; color: var(--muted); font-size: 14px; }
-.grid, .checks { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px 20px; }
-.grid > div, .checks > div { padding-top: 10px; border-top: 1px solid var(--rule-soft); }
-.label { display: block; font-size: 12.5px; color: var(--muted); margin-bottom: 2px; }
-h3.section { margin: 28px 0 10px; font-family: var(--serif); font-size: 16px; font-weight: 700; }
-.reasons { margin: 14px 0 0; padding-left: 20px; }
-.report {
-  margin: 0; white-space: pre-wrap;
-  background: var(--paper); border: 1px solid var(--rule-soft); border-left: 3px solid var(--green);
-  border-radius: 10px; padding: 16px 18px;
-  font-family: Consolas, "Courier New", monospace; font-size: 13px; line-height: 1.6;
-}
-
-/* ---------- Charts ---------- */
-.charts { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-.chart { margin: 0; min-width: 0; }
-.chart figcaption { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
-.chart-box { position: relative; height: 320px; }
-.chart.empty .chart-box { display: none; }
-.chart.empty::after { content: "Nothing to show until an invoice is added."; display: block; padding: 36px 0; color: var(--muted); font-size: 14px; }
-
-/* ---------- Small screens ---------- */
-@media (max-width: 980px) {
-  .layout { grid-template-columns: minmax(0, 1fr); }
-  .intake { position: static; }
-}
-@media (max-width: 720px) {
-  .charts { grid-template-columns: 1fr; }
-  .topbar { padding: 12px 16px; }
-  .tagline { display: none; }
-  .layout { padding: 16px; }
-  .detail-head { flex-direction: column; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .stamp { animation: none; }
-  .drop { transition: none; }
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
 }
