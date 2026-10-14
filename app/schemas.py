@@ -43,9 +43,12 @@ class AuditOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     invoice_id: int
     vendor_check: str | None
-    policy_check: str | None
+    fields_check: str | None
+    total_check: str | None
     duplicate_check: str | None
+    policy_check: str | None
     anomaly_score: float | None
     final_status: InvoiceStatus
     reasons: list[str] | None
+    details: dict | None = None
     report: str | None

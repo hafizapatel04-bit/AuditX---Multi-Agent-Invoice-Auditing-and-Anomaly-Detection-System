@@ -2,7 +2,7 @@ from pathlib import Path
 from uuid import uuid4
 import shutil
 import logging
-
+from app.services.duplicate_check import check_duplicate
 from app.models import Invoice, InvoiceStatus
 from extraction.extractor import extract_invoice
 
@@ -120,3 +120,9 @@ def get_invoice(invoice_id: int, db: Session = Depends(get_db)):
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
     return invoice
+@router.get("/invoice/{invoice_id}/duplicate-check")
+def duplicate_check(invoice_id: int, db: Session = Depends(get_db)):
+    invoice = db.get(Invoice, invoice_id)
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+    return check_duplicate(db, invoice)
