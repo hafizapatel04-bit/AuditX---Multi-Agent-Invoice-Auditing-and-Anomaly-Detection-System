@@ -20,7 +20,6 @@ class ExtractedInvoice(BaseModel):
     subtotal: float | None = None
     tax_amount: float | None = None
     amount: float | None = None      # total, including tax
-    currency: str = "INR"
     category: str | None = None
     line_items: list[LineItem] = []
     currency: str | None = None
