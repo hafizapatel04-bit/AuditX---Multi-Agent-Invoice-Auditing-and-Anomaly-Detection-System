@@ -41,7 +41,7 @@ def _template(facts, status):
         amt = f"{float(facts['amount']):,.2f} {facts['currency'] or ''}".strip()
     else:
         amt = "an unreadable amount"
-    lines = [f"Invoice {num} from {who} for {amt} is {status.lower()}."]
+    lines = [f"Invoice {num} from {who} for {amt}: {status}."]
     for f in facts["findings"]:
         lines.append(f"- {f['rule']} ({f['severity']}): {f['message']}")
     for fl in facts["extraction_flags"]:
@@ -64,8 +64,15 @@ def _narrate(facts, status):
         text = r.message.content.strip()
     except Exception:
         return None
-    if not text or not _numbers(text) <= _numbers(json.dumps(facts, default=str)):
-        return None  # model added a number that isn't in the facts
+    text = re.sub(r"^here('s| is)[^\n]*:\s*", "", text, flags=re.I).strip()
+    evidence = " ".join(
+        [f["rule"] + " " + f["message"] for f in facts["findings"]] + facts["extraction_flags"]
+    ).lower()
+    claims = set(re.findall(r"subtotal|\btax\b|mismatch|duplicate|unapproved|anomal|outlier|fraud|overdue", text.lower()))
+    if not text or any(c not in evidence for c in claims):
+        return None  # mentions a problem that isn't in the facts
+    if not _numbers(text) <= _numbers(json.dumps(facts, default=str)):
+        return None  # mentions a number that isn't in the facts
     return text
 
 
