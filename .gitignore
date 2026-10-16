@@ -5,3 +5,4 @@ uploads/
 .env
 .vscode/
 anomaly/model/
+node_modules

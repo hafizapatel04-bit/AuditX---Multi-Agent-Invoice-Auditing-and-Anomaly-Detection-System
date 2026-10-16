@@ -23,12 +23,15 @@ class ExtractedInvoice(BaseModel):
     currency: str = "INR"
     category: str | None = None
     line_items: list[LineItem] = []
+    currency: str | None = None
 
 class InvoiceOut(ExtractedInvoice):
     model_config = ConfigDict(from_attributes=True)
     id: int
     status: InvoiceStatus
     created_at: datetime
+    notes: str | None = None
+    review_flags: list[str] | None = None
 
 
 class VendorOut(BaseModel):
@@ -43,9 +46,12 @@ class AuditOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     invoice_id: int
     vendor_check: str | None
-    policy_check: str | None
+    fields_check: str | None
+    total_check: str | None
     duplicate_check: str | None
+    policy_check: str | None
     anomaly_score: float | None
     final_status: InvoiceStatus
     reasons: list[str] | None
+    details: dict | None = None
     report: str | None

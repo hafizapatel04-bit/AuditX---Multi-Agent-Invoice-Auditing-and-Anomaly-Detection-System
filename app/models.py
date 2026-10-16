@@ -42,9 +42,9 @@ class Invoice(Base):
     invoice_date: Mapped[date | None] = mapped_column(Date)
     due_date: Mapped[date | None] = mapped_column(Date)
     subtotal: Mapped[float | None] = mapped_column(Float)
-    tax: Mapped[float | None] = mapped_column(Float)
+    tax_amount: Mapped[float | None] = mapped_column(Float)
     amount: Mapped[float | None] = mapped_column(Float)
-    currency: Mapped[str] = mapped_column(String(10), default="INR")
+    currency: Mapped[str | None] = mapped_column(String(10))
     category: Mapped[str | None] = mapped_column(String(100))
     line_items: Mapped[list | None] = mapped_column(JSON)
     file_path: Mapped[str | None] = mapped_column(String(500))
@@ -54,7 +54,8 @@ class Invoice(Base):
 
     vendor: Mapped[Vendor | None] = relationship(back_populates="invoices")
     audit: Mapped["AuditResult | None"] = relationship(back_populates="invoice", uselist=False)
-
+    notes: Mapped[str | None] = mapped_column(Text)   
+    review_flags: Mapped[list | None] = mapped_column(JSON)
 
 class Policy(Base):
     __tablename__ = "policies"
@@ -75,6 +76,9 @@ class AuditResult(Base):
     vendor_check: Mapped[str | None] = mapped_column(String(50))
     policy_check: Mapped[str | None] = mapped_column(String(50))
     duplicate_check: Mapped[str | None] = mapped_column(String(50))
+    fields_check: Mapped[str | None] = mapped_column(String(50))
+    total_check: Mapped[str | None] = mapped_column(String(50))
+    details: Mapped[dict | None] = mapped_column(JSON)
     anomaly_score: Mapped[float | None] = mapped_column(Float)
     final_status: Mapped[InvoiceStatus] = mapped_column(Enum(InvoiceStatus))
     reasons: Mapped[list | None] = mapped_column(JSON)
