@@ -144,6 +144,21 @@ def _ground_category(text, cat):
         return "Other"
     return cat
 
+_CUR_PATTERNS = {
+    "USD": r"\$|usd|us\s*dollar",
+    "INR": r"₹|\brs\b|inr|rupee",
+    "EUR": r"€|eur",
+    "GBP": r"£|gbp",
+}
+
+
+def _ground_currency(text, cur):
+    if not cur:
+        return None
+    pat = _CUR_PATTERNS.get(str(cur).upper(), re.escape(str(cur)))
+    return cur if re.search(pat, text.lower()) else None
+
+
 def extract_invoice(file_path: str) -> ExtractedInvoice:
     text = get_text(file_path)
     if len(text) > 3500:
@@ -161,6 +176,7 @@ def extract_invoice(file_path: str) -> ExtractedInvoice:
         data["subtotal"] = _ground_field(text, data.get("subtotal"), _SUB_RE)
         data["tax_amount"] = _ground_field(text, data.get("tax_amount"), _TAX_RE)
         data["category"] = _ground_category(text, data.get("category"))
+        data["currency"] = _ground_currency(text, data.get("currency"))
         inv = ExtractedInvoice.model_validate(data)
     except (json.JSONDecodeError, ValidationError) as e:
         raise ValueError(f"Extraction failed: {e}\nRaw output: {response.message.content}")
