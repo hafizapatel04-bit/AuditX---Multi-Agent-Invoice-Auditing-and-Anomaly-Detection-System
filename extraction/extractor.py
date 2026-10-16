@@ -20,7 +20,7 @@ Rules:
 - vendor_name is the company issuing the invoice (the "From" side), not the customer.
 - amount is the final total due, including tax.
 - currency is the 3-letter code printed on the invoice, or inferred from the symbol ($ = USD, Rs or ₹ = INR). If no currency is shown, use null.
-- category must be exactly one of: Software Subscription, Travel, Food, Equipment, Office Supplies, Cloud Services, Other. Use Other if unsure.
+- category must be exactly one of: Software Subscription, Travel, Food, Equipment, Office Supplies, Cloud Services, Other. Choose Software Subscription only for recurring software or licence fees. Web design, consulting, plants, chemicals, medicine and any other goods or services are Other. Use Other if unsure.
 - line_items are only the products or services being sold. Never include table headings, Tax, Sub Total or Total rows.
 
 Invoice text:
@@ -114,7 +114,7 @@ def _fix_date(text, d):
 
 _SUB_RE = re.compile(r"sub\s*total|\bnet\b|taxable")
 _TAX_RE = re.compile(r"\bgst\b|\bvat\b|\btax\b|\bcgst\b|\bsgst\b|\bigst\b")
-
+_EXTRA_RE = re.compile(r"shipping|handling|freight|delivery|discount|round\s*off")
 
 def _ground_field(text, value, label_re):
     """Keep the value only if it appears in the text; else read it from the labelled line."""
@@ -128,7 +128,21 @@ def _ground_field(text, value, label_re):
                 return float(found[-1].replace(",", ""))
     return None
 
+_CAT_WORDS = {
+    "Software Subscription": r"software|subscription|licen[cs]e|saas",
+    "Travel": r"travel|flight|airline|hotel|booking|ticket|taxi",
+    "Food": r"food|cater|restaurant|meal|beverage|lunch|dinner",
+    "Equipment": r"equipment|hardware|laptop|printer|machine|monitor",
+    "Office Supplies": r"office|stationery|supplies|toner|paper",
+    "Cloud Services": r"cloud|hosting|server|storage|compute",
+}
 
+def _ground_category(text, cat):
+    if cat not in _CAT_WORDS:
+        return "Other"
+    if not re.search(_CAT_WORDS[cat], text.lower()):
+        return "Other"
+    return cat
 
 def extract_invoice(file_path: str) -> ExtractedInvoice:
     text = get_text(file_path)
@@ -138,20 +152,38 @@ def extract_invoice(file_path: str) -> ExtractedInvoice:
         model=MODEL,
         messages=[{"role": "user", "content": PROMPT.replace("{text}", text)}],
         format="json",
-        options={"temperature": 0, "num_predict": 600},
+        options={"temperature": 0, "num_predict": 900},
         keep_alive="30m",
     )
     try:
-        data = _clean(json.loads(response.message.content))
+        data = _clean(_parse_json(response.message.content))
         data["amount"] = _ground_amount(text, data.get("amount"))
         data["subtotal"] = _ground_field(text, data.get("subtotal"), _SUB_RE)
         data["tax_amount"] = _ground_field(text, data.get("tax_amount"), _TAX_RE)
+        data["category"] = _ground_category(text, data.get("category"))
         inv = ExtractedInvoice.model_validate(data)
     except (json.JSONDecodeError, ValidationError) as e:
         raise ValueError(f"Extraction failed: {e}\nRaw output: {response.message.content}")
     inv.invoice_date = _fix_date(text, inv.invoice_date)
+    if inv.invoice_date and str(inv.invoice_date)[:4] not in text:
+        inv.invoice_date = None  # year isn't in the text, so the model invented the date
+    num = (inv.invoice_number or "").strip()
+    if num and (len(num) < 2 or not re.search(rf"(?<!\w){re.escape(num)}(?!\w)", text)):
+        inv.invoice_number = None  # too short, or not found as a whole token in the text
+    if (None not in (inv.subtotal, inv.tax_amount, inv.amount)
+            and _EXTRA_RE.search(text.lower())
+            and abs(inv.subtotal + inv.tax_amount - inv.amount) > 0.05):
+        inv.subtotal = None  # extra charge lines present, so subtotal + tax can't be checked
     return inv
 
+def _parse_json(raw: str) -> dict:
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        i = raw.find('"line_items"')
+        if i == -1:
+            raise
+        return json.loads(raw[:i].rstrip().rstrip(",") + "}")  # keep header, drop truncated items
 
 def check_arithmetic(inv, tol: float = 0.05):
     """True if subtotal + tax == total, False if not, None if the numbers are missing."""
