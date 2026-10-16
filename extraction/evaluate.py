@@ -58,7 +58,7 @@ def main(limit=None):
     print("\nField accuracy:")
     for k in totals:
         print(f"  {k:15} {hits[k]}/{totals[k]}  ({100 * hits[k] / totals[k]:.0f}%)")
-        print(f"\nPoor files flagged for review: {poor_flagged}/{poor_total}")
+    print(f"\nPoor files flagged for review: {poor_flagged}/{poor_total}")
 
 if __name__ == "__main__":
     main(int(sys.argv[1]) if len(sys.argv) > 1 else None)
