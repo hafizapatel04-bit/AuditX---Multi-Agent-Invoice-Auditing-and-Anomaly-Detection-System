@@ -109,3 +109,16 @@ def test_rerun_updates_same_row():
     run_audit(db, invoice)
     run_audit(db, invoice)
     assert db.query(AuditResult).count() == 1
+
+def test_unreadable_invoice_number_flag_goes_to_review():
+    db = make_db()
+    result = run_audit(db, add(db, invoice_number="INV 20O1",
+                               review_flags=["invoice number missing or unreadable"]))
+    assert result.final_status == InvoiceStatus.flagged
+    assert "invoice number missing or unreadable" in result.reasons
+
+
+def test_arithmetic_flag_from_extraction_is_ignored():
+    db = make_db()
+    result = run_audit(db, add(db, review_flags=["subtotal + tax does not equal total"]))
+    assert result.final_status == InvoiceStatus.approved

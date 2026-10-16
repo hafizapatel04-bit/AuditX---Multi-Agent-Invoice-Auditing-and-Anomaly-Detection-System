@@ -61,6 +61,8 @@ def run_audit(db: Session, invoice: Invoice) -> AuditResult:
     invoice.vendor_id = vendor["vendor_id"]
     fields = check_fields(invoice)
     total = check_total(invoice)
+        # A's arithmetic flag is ignored: check_total() above uses Person C's 1.00 tolerance
+    extraction_flags = [f for f in (invoice.review_flags or []) if "does not equal total" not in f]
     duplicate = check_duplicate(db, invoice)
     if (invoice.currency or "").upper() == "INR":
         policy = check_policy(db, invoice.amount, invoice.category)
@@ -75,6 +77,7 @@ def run_audit(db: Session, invoice: Invoice) -> AuditResult:
         "total": total["result"] == "mismatch",
         "duplicate": duplicate["result"] != "no_duplicate",
         "policy": policy["result"] != "normal",
+        "extraction": bool(extraction_flags),
         "anomaly": bool(anomaly and anomaly.get("is_anomaly")),
     }
 
@@ -89,6 +92,8 @@ def run_audit(db: Session, invoice: Invoice) -> AuditResult:
         reasons.append(duplicate["reason"])
     if flags["policy"]:
         reasons.append(policy["reason"])
+    if flags["extraction"] and fields["result"] == "complete":
+        reasons.extend(extraction_flags)
     if flags["anomaly"]:
         reasons.append(anomaly.get("reason") or "Amount flagged as anomalous")
 

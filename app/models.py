@@ -55,7 +55,7 @@ class Invoice(Base):
     vendor: Mapped[Vendor | None] = relationship(back_populates="invoices")
     audit: Mapped["AuditResult | None"] = relationship(back_populates="invoice", uselist=False)
     notes: Mapped[str | None] = mapped_column(Text)   
-
+    review_flags: Mapped[list | None] = mapped_column(JSON)
 
 class Policy(Base):
     __tablename__ = "policies"

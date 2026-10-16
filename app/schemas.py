@@ -31,6 +31,7 @@ class InvoiceOut(ExtractedInvoice):
     status: InvoiceStatus
     created_at: datetime
     notes: str | None = None
+    review_flags: list[str] | None = None
 
 
 class VendorOut(BaseModel):

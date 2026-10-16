@@ -4,7 +4,7 @@ import shutil
 import logging
 from app.services.duplicate_check import check_duplicate
 from app.models import Invoice, InvoiceStatus
-from extraction.extractor import extract_invoice
+from extraction.extractor import extract_invoice, review_flags
 
 log = logging.getLogger(__name__)
 
@@ -50,6 +50,7 @@ def upload_invoice(file: UploadFile, db: Session = Depends(get_db)):
                 currency=data.currency,
                 category=data.category,
                 line_items=[li.model_dump() for li in data.line_items],
+                review_flags=review_flags(data),
                 file_path=str(save_path),
             )
         else:
