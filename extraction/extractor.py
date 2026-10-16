@@ -131,12 +131,15 @@ def _ground_field(text, value, label_re):
 
 
 def extract_invoice(file_path: str) -> ExtractedInvoice:
-    text = get_text(file_path)[:3000]
+    text = get_text(file_path)
+    if len(text) > 3500:
+        text = text[:2000] + "\n...\n" + text[-1500:]
     response = client.chat(
         model=MODEL,
         messages=[{"role": "user", "content": PROMPT.replace("{text}", text)}],
         format="json",
         options={"temperature": 0, "num_predict": 600},
+        keep_alive="30m",
     )
     try:
         data = _clean(json.loads(response.message.content))
@@ -155,3 +158,18 @@ def check_arithmetic(inv, tol: float = 0.05):
     if None in (inv.subtotal, inv.tax_amount, inv.amount):
         return None
     return abs(inv.subtotal + inv.tax_amount - inv.amount) <= tol
+
+
+def review_flags(inv):
+    flags = []
+    num = (inv.invoice_number or "").strip()
+    if not num or not re.search(r"\d", num) or " " in num:
+        flags.append("invoice number missing or unreadable")
+    if inv.amount is None:
+        flags.append("amount missing")
+    if inv.invoice_date is None:
+        flags.append("invoice date missing")
+    if check_arithmetic(inv) is False:
+        flags.append("subtotal + tax does not equal total")
+    return flags
+
