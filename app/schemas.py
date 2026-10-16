@@ -23,12 +23,14 @@ class ExtractedInvoice(BaseModel):
     currency: str = "INR"
     category: str | None = None
     line_items: list[LineItem] = []
+    currency: str | None = None
 
 class InvoiceOut(ExtractedInvoice):
     model_config = ConfigDict(from_attributes=True)
     id: int
     status: InvoiceStatus
     created_at: datetime
+    notes: str | None = None
 
 
 class VendorOut(BaseModel):

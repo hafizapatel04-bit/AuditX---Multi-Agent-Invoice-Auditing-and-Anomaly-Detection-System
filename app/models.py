@@ -44,7 +44,7 @@ class Invoice(Base):
     subtotal: Mapped[float | None] = mapped_column(Float)
     tax_amount: Mapped[float | None] = mapped_column(Float)
     amount: Mapped[float | None] = mapped_column(Float)
-    currency: Mapped[str] = mapped_column(String(10), default="INR")
+    currency: Mapped[str | None] = mapped_column(String(10))
     category: Mapped[str | None] = mapped_column(String(100))
     line_items: Mapped[list | None] = mapped_column(JSON)
     file_path: Mapped[str | None] = mapped_column(String(500))
@@ -54,6 +54,7 @@ class Invoice(Base):
 
     vendor: Mapped[Vendor | None] = relationship(back_populates="invoices")
     audit: Mapped["AuditResult | None"] = relationship(back_populates="invoice", uselist=False)
+    notes: Mapped[str | None] = mapped_column(Text)   
 
 
 class Policy(Base):

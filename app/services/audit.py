@@ -62,7 +62,11 @@ def run_audit(db: Session, invoice: Invoice) -> AuditResult:
     fields = check_fields(invoice)
     total = check_total(invoice)
     duplicate = check_duplicate(db, invoice)
-    policy = check_policy(db, invoice.amount, invoice.category)
+    if (invoice.currency or "").upper() == "INR":
+        policy = check_policy(db, invoice.amount, invoice.category)
+    else:
+        policy = {"result": "unchecked",
+                "reason": "Currency missing or not INR, approval limits are in rupees"}
     anomaly = run_anomaly(invoice)
 
     flags = {
