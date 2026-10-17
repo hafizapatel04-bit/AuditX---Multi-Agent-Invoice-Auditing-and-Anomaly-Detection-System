@@ -55,8 +55,37 @@ def decide_status(flags: dict) -> InvoiceStatus:
         return InvoiceStatus.needs_review
     return InvoiceStatus.flagged
 
+STATUS_TEXT = {
+    InvoiceStatus.approved: "APPROVED",
+    InvoiceStatus.needs_review: "PENDING MANAGER APPROVAL",
+    InvoiceStatus.flagged: "FLAGGED - MANUAL REVIEW",
+}
 
-def run_audit(db: Session, invoice: Invoice) -> AuditResult:
+
+def make_report(invoice: Invoice, details: dict, status: InvoiceStatus, use_llm: bool) -> str | None:
+    try:
+        from anomaly.reporting import generate_report
+        result = generate_report(
+            {
+                "invoice_number": invoice.invoice_number,
+                "vendor": invoice.vendor_name,
+                "total": invoice.amount,
+                "currency": invoice.currency,
+                "category": invoice.category,
+                "date": str(invoice.invoice_date) if invoice.invoice_date else None,
+            },
+            {**details, "final_status": STATUS_TEXT[status]},  # my decision wins
+            use_llm=use_llm,
+        )
+        text = result["report_text"]
+        if details.get("extraction_flags"):
+            text += "\n\nExtraction notes: " + "; ".join(details["extraction_flags"])
+        return text
+    except Exception as e:
+        log.warning("Report generation failed for invoice %s: %s", invoice.id, e)
+        return None
+
+def run_audit(db: Session, invoice: Invoice, use_llm: bool = False) -> AuditResult:
     vendor = verify_vendor(db, invoice.vendor_name or "")
     invoice.vendor_id = vendor["vendor_id"]
     fields = check_fields(invoice)
@@ -123,6 +152,7 @@ def run_audit(db: Session, invoice: Invoice) -> AuditResult:
     result.final_status = status
     result.reasons = reasons
     result.details = details
+    result.report = make_report(invoice, details, status, use_llm)
     invoice.status = status
 
     db.add(result)

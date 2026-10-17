@@ -15,3 +15,6 @@ rig_duplicate.pdf,Tasty Bites Catering,INV2001,2026-07-22,4006.96,INR,Food,clean
 rig_unknown_vendor.pdf,Zenith Global Traders,INV9001,2026-02-02,14737.72,INR,Software Subscription,clean,unapproved_vendor,RIGGED: vendor not in approved list
 rig_wrong_total.pdf,Northwind Software Pvt Ltd,INV9002,2026-09-12,17991.9,INR,Software Subscription,clean,total_mismatch,RIGGED: printed total does not equal subtotal + tax
 rig_huge_amount.pdf,Northwind Software Pvt Ltd,INV9003,2026-08-07,242872.32,INR,Software Subscription,clean,anomaly,RIGGED: amount about 15x normal
+invoice_1.pdf,Bioplex,BPXINV-00550,2021-05-23,6610.95,,Other,real,none,real-world invoice, no currency printed
+invoice_2.pdf,DEMO - Sliced Invoices,INV-3337,2016-01-25,93.5,USD,Other,real,none,real-world invoice
+invoice_3.pdf,Zencorporations,1213,2021-12-16,2809.3,EUR,Other,real,none,real-world invoice
