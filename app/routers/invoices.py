@@ -2,9 +2,9 @@ from pathlib import Path
 from uuid import uuid4
 import shutil
 import logging
-
+from app.services.duplicate_check import check_duplicate
 from app.models import Invoice, InvoiceStatus
-from extraction.extractor import extract_invoice
+from extraction.extractor import extract_invoice, review_flags
 
 log = logging.getLogger(__name__)
 
@@ -26,36 +26,43 @@ def upload_invoice(file: UploadFile, db: Session = Depends(get_db)):
     if not file.filename.lower().endswith((".pdf", ".png", ".jpg", ".jpeg")):
         raise HTTPException(status_code=400, detail="Only PDF or image files allowed")
 
-    save_path = UPLOAD_DIR / f"{uuid4().hex}_{file.filename}"
+    save_path = UPLOAD_DIR / f"{uuid4().hex}_{Path(file.filename).name}"
     with open(save_path, "wb") as f:
         shutil.copyfileobj(file.file, f)
 
+    error = None
     try:
         data = extract_invoice(str(save_path))
-        invoice = Invoice(
-            vendor_name=data.vendor_name,
-            invoice_number=data.invoice_number,
-            invoice_date=data.invoice_date,
-            due_date=data.due_date,
-            subtotal=data.subtotal,
-            tax_amount=data.tax_amount,
-            amount=data.amount,
-            currency=data.currency,
-            category=data.category,
-            line_items=[li.model_dump() for li in data.line_items],
-            file_path=str(save_path),
-        )
-    except Exception as e:  # ValueError = bad extraction; others = Ollama down or timeout
+    except Exception as e:  # extraction problems only (bad output, Ollama down, timeout)
         log.warning("Extraction failed for %s: %s", file.filename, e)
-        invoice = Invoice(
-            vendor_name="UNKNOWN",
-            line_items=[],
-            file_path=str(save_path),
-            status=InvoiceStatus.needs_review,
-        )
+        data, error = None, f"Extraction failed: {str(e)[:500]}"
 
-    db.add(invoice)
-    db.commit()
+    try:
+        if data:
+            invoice = Invoice(
+                vendor_name=data.vendor_name,
+                invoice_number=data.invoice_number,
+                invoice_date=data.invoice_date,
+                due_date=data.due_date,
+                subtotal=data.subtotal,
+                tax_amount=data.tax_amount,
+                amount=data.amount,
+                currency=data.currency,
+                category=data.category,
+                line_items=[li.model_dump() for li in data.line_items],
+                review_flags=review_flags(data),
+                file_path=str(save_path),
+            )
+        else:
+            invoice = Invoice(vendor_name="UNKNOWN", line_items=[], file_path=str(save_path),
+                              status=InvoiceStatus.needs_review, notes=error)
+        db.add(invoice)
+        db.commit()
+    except Exception as e:  # saving problems are NOT hidden as an extraction failure
+        db.rollback()
+        log.exception("Could not save invoice %s", file.filename)
+        raise HTTPException(status_code=500, detail=f"Saving the invoice failed: {e}")
+
     db.refresh(invoice)
     return invoice
 
@@ -120,3 +127,9 @@ def get_invoice(invoice_id: int, db: Session = Depends(get_db)):
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
     return invoice
+@router.get("/invoice/{invoice_id}/duplicate-check")
+def duplicate_check(invoice_id: int, db: Session = Depends(get_db)):
+    invoice = db.get(Invoice, invoice_id)
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+    return check_duplicate(db, invoice)

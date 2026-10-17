@@ -2,7 +2,7 @@ import csv
 import os
 import sys
 
-from extraction.extractor import extract_invoice
+from extraction.extractor import extract_invoice, review_flags
 
 CSV_PATH = "sample_data/ground_truth.csv"
 PDF_DIR = "sample_data/test_invoices"
@@ -22,6 +22,7 @@ def main(limit=None):
         sys.exit("No filename column found. Tell me the column names above.")
 
     totals, hits = {}, {}
+    poor_total = poor_flagged = 0
     for row in rows[:limit]:
         name = row[fcol]
         path = os.path.join(PDF_DIR, name)
@@ -32,6 +33,12 @@ def main(limit=None):
             got = extract_invoice(path)
         except Exception as e:
             print(f"FAILED  {name}: {str(e)[:80]}")
+            continue
+        if norm(row.get(cols.get("quality", ""), "")) == "poor":
+            flags = review_flags(got)
+            poor_total += 1
+            poor_flagged += int(bool(flags))
+            print(f"{'FLAGGED' if flags else 'MISSED '} {name} {flags}")
             continue
         checks = {
             "vendor": norm(row.get(cols.get("vendor_name", cols.get("vendor", "")), "")) in norm(got.vendor_name)
@@ -51,7 +58,7 @@ def main(limit=None):
     print("\nField accuracy:")
     for k in totals:
         print(f"  {k:15} {hits[k]}/{totals[k]}  ({100 * hits[k] / totals[k]:.0f}%)")
-
+    print(f"\nPoor files flagged for review: {poor_flagged}/{poor_total}")
 
 if __name__ == "__main__":
     main(int(sys.argv[1]) if len(sys.argv) > 1 else None)
