@@ -122,3 +122,16 @@ def test_arithmetic_flag_from_extraction_is_ignored():
     db = make_db()
     result = run_audit(db, add(db, review_flags=["subtotal + tax does not equal total"]))
     assert result.final_status == InvoiceStatus.approved
+
+def test_report_is_saved():
+    db = make_db()
+    result = run_audit(db, add(db))
+    assert result.report
+    assert "FINAL STATUS: APPROVED" in result.report
+
+
+def test_report_headline_matches_my_status():
+    db = make_db()
+    result = run_audit(db, add(db, review_flags=["invoice number missing or unreadable"]))
+    assert result.final_status == InvoiceStatus.flagged
+    assert "FINAL STATUS: FLAGGED - MANUAL REVIEW" in result.report

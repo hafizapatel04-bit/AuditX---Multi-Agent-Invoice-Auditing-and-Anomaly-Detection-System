@@ -6,3 +6,5 @@ uploads/
 .vscode/
 anomaly/model/
 node_modules
+
+results.txt
