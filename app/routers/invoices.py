@@ -5,7 +5,7 @@ import logging
 from app.services.duplicate_check import check_duplicate
 from app.models import Invoice, InvoiceStatus
 from extraction.extractor import extract_invoice, review_flags
-
+from app.services.audit import run_audit
 log = logging.getLogger(__name__)
 
 
@@ -62,6 +62,14 @@ def upload_invoice(file: UploadFile, db: Session = Depends(get_db)):
         db.rollback()
         log.exception("Could not save invoice %s", file.filename)
         raise HTTPException(status_code=500, detail=f"Saving the invoice failed: {e}")
+
+    try:
+        run_audit(db, invoice)
+    except Exception as e:
+        db.rollback()
+        log.exception("Audit failed for invoice %s", invoice.id)
+        invoice.notes = f"Audit failed: {str(e)[:300]}"
+        db.commit()
 
     db.refresh(invoice)
     return invoice
